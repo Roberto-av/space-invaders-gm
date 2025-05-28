@@ -80,6 +80,7 @@ class EnemyManager {
     const x = random(this.canvasWidth - this.width);
     let canShoot = false;
     let speed = 1 + this.level * 0.5;
+    let health = 1;
 
     if (type === 2) {
       this.imageSrcs = [

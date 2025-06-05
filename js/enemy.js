@@ -41,7 +41,15 @@ class Enemy {
       this.horizontalMoveDuration = random(3000, 5000);
       this.verticalMoveSpeed = 1;
     } else if (this.type === 3) {
-      // Boss específico
+      this.moveState = "descending";
+      this.moveStartTime = millis();
+      this.originX = x;
+      this.originY = y; 
+      this.amplitude = 100;
+      this.verticalDirection = 1;
+      this.diagonalSpeed = 2;
+    } else if (this.type === 4) {
+      // Boss
       this.moveState = "initial";
       this.moveStartTime = millis();
       this.horizontalMoveDuration = random(3000, 5000);
@@ -74,7 +82,95 @@ class Enemy {
         this.directionX *= -1;
       }
     } else if (this.type === 3) {
-      // Movimiento para el boss (tipo 3)
+      const elapsed = currentTime - this.moveStartTime;
+
+      // 1) Estado "descending": baja en línea recta
+      if (this.moveState === "descending") {
+        this.y += this.speed;
+
+        // Cuando llega a la posición objetivo (30% del canvas)
+        if (this.y >= this.canvasHeight * 0.3) {
+          this.moveState = "sideToSide";
+          this.moveStartTime = currentTime;
+          this.originX = this.x;
+          this.originY = this.y;
+          this.verticalDirection = random() < 0.5 ? -1 : 1; // Dirección vertical aleatoria
+        }
+
+        // Estado "sideToSide": movimiento horizontal oscilante
+      } else if (this.moveState === "sideToSide") {
+        // Movimiento sinusoidal suave
+        const frequency = 0.002;
+        this.x =
+          this.originX +
+          this.amplitude * sin((currentTime - this.moveStartTime) * frequency);
+
+        // Pequeño movimiento vertical aleatorio
+        if (random() < 0.02) {
+          this.verticalDirection = random() < 0.5 ? -1 : 1;
+        }
+        this.y += this.verticalDirection * 0.5;
+
+        // Limitar posición vertical
+        this.y = constrain(
+          this.y,
+          this.canvasHeight * 0.2,
+          this.canvasHeight * 0.7
+        );
+
+        // Cambiar a movimiento diagonal ocasionalmente
+        if (elapsed > 4000 && random() < 0.005) {
+          this.moveState = "diagonal";
+          this.moveStartTime = currentTime;
+          this.diagonalDirectionX = random() < 0.5 ? -1 : 1;
+          this.diagonalDirectionY = random() < 0.3 ? -1 : 1;
+        }
+
+        // Estado "diagonal": movimiento en diagonal
+      } else if (this.moveState === "diagonal") {
+        this.x += this.diagonalDirectionX * this.diagonalSpeed;
+        this.y += this.diagonalDirectionY * this.diagonalSpeed;
+
+        // Rebotar en los bordes con margen
+        const margin = 20;
+        if (
+          this.x <= margin ||
+          this.x + this.width >= this.canvasWidth - margin
+        ) {
+          this.diagonalDirectionX *= -1;
+          this.x = constrain(
+            this.x,
+            margin,
+            this.canvasWidth - this.width - margin
+          );
+        }
+        if (
+          this.y <= this.canvasHeight * 0.2 ||
+          this.y + this.height >= this.canvasHeight * 0.8
+        ) {
+          this.diagonalDirectionY *= -1;
+          this.y = constrain(
+            this.y,
+            this.canvasHeight * 0.2,
+            this.canvasHeight * 0.8 - this.height
+          );
+        }
+
+        // Volver al movimiento sideToSide después de 1.5-2.5 segundos
+        if (elapsed > 1500 + random(1000)) {
+          this.moveState = "sideToSide";
+          this.moveStartTime = currentTime;
+          this.originX = this.x;
+          this.originY = this.y;
+          this.amplitude = 80 + random(40); // Variar la amplitud
+        }
+      }
+
+      // Asegurarse de que el enemigo no desaparezca
+      this.x = constrain(this.x, 0, this.canvasWidth - this.width);
+      this.y = constrain(this.y, 0, this.canvasHeight - this.height);
+    } else if (this.type === 4) {
+      // Movimiento para el boss (tipo 4)
       if (this.moveState === "initial") {
         this.y += this.verticalMoveSpeed;
         if (currentTime - this.moveStartTime >= this.maxTimeInInitialState) {
@@ -127,7 +223,7 @@ class Enemy {
 
     // Disparo especial del boss
     if (
-      this.type === 3 &&
+      this.type === 4 &&
       currentTime - this.lastShootTime > this.bossShootCooldown
     ) {
       this.updateBulletPositions();

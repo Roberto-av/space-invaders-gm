@@ -33,13 +33,22 @@ class EnemyManager {
     this.spawnInterval = setInterval(() => {
       if (this.enemies.length < this.maxActiveEnemies + playerLevel) {
         if (playerLevel === 1) {
-          this.createEnemy(1); // Solo enemigos débiles en el nivel 1
-        } else {
+          this.createEnemy(1);
+        } else if (playerLevel === 2) {
           const chance = random();
           if (chance > 0.8) {
-            this.createEnemy(2); // Enemigos tipo 2 con disparos
+            this.createEnemy(2);
           } else {
-            this.createEnemy(1); // Mezclados con enemigos tipo 1
+            this.createEnemy(1);
+          }
+        } else if (playerLevel >= 3) {
+          const chance = random();
+          if (chance < 0.15) {
+            this.spawnEnemyGroup(3, 5);
+          } else if (chance < 0.45) {
+            this.createEnemy(2);
+          } else {
+            this.createEnemy(1);
           }
         }
 
@@ -95,6 +104,15 @@ class EnemyManager {
         health: 3,
         canShoot: true,
         speed: isLevel1 ? 1.2 : 2 + this.level * 0.3,
+      },
+      3: {
+        imageSrcs: [
+          "img/enemigos/3/enemigo-3-r.png",
+          "img/enemigos/3/enemigo-3-m.png",
+        ],
+        health: 1,
+        canShoot: true,
+        speed: isLevel1 ? 1.5 : 2 + this.level * 0.4,
       },
     };
 
@@ -181,9 +199,46 @@ class EnemyManager {
     this.bullets = [];
     this.bossSpawned = false;
   }
-  
- // reinicia el tiempo para evitar respawn inmediato
+
+  // reinicia el tiempo para evitar respawn inmediato
   resetSpawnTimer() {
     this.lastSpawnTime = millis();
+  }
+
+  spawnEnemyGroup(type, count) {
+    const spacing = this.canvasWidth / (count + 1);
+
+    for (let i = 0; i < count; i++) {
+      const x = spacing * (i + 1);
+      const config = {
+        3: {
+          imageSrcs: [
+            "img/enemigos/3/enemigo-3-r.png",
+            "img/enemigos/3/enemigo-3-m.png",
+          ],
+          health: 1,
+          canShoot: false,
+          speed: 2 + this.level * 0.4,
+        },
+      }[type];
+
+      if (!config) return;
+
+      const enemy = new Enemy(
+        x,
+        -i * 60, // escalonados en Y para no superponerse
+        this.width,
+        this.height,
+        config.speed,
+        config.imageSrcs,
+        this.canvasWidth,
+        this.canvasHeight,
+        type,
+        config.health,
+        config.canShoot
+      );
+
+      this.enemies.push(enemy);
+    }
   }
 }

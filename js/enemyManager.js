@@ -20,6 +20,7 @@ class EnemyManager {
       "img/enemigos/1/enemigo-1-m.png",
     ];
     this.spawnInterval = null; // Para almacenar el intervalo
+    this.enemyScore = 0;
   }
 
   init(playerLevel) {
@@ -30,11 +31,6 @@ class EnemyManager {
     this.totalEnemies = 0;
 
     this.spawnInterval = setInterval(() => {
-      if (playerLevel === 1 && this.totalEnemies >= 10) {
-        clearInterval(this.spawnInterval);
-        return;
-      }
-
       if (this.enemies.length < this.maxActiveEnemies + playerLevel) {
         if (playerLevel === 1) {
           this.createEnemy(1); // Solo enemigos débiles en el nivel 1
@@ -51,7 +47,7 @@ class EnemyManager {
       }
 
       // Activar aparición del jefe solo si es nivel 2 o más
-      if (playerLevel > 1) {
+      /*       if (playerLevel > 1) {
         const currentTime = millis();
 
         if (this.bossSpawned) {
@@ -70,7 +66,7 @@ class EnemyManager {
             this.bossAppearanceTime = currentTime;
           }
         }
-      }
+      } */
 
       this.timeElapsed += this.spawnRate;
     }, this.spawnRate);
@@ -166,7 +162,6 @@ class EnemyManager {
 
       if (enemy.y > this.canvasHeight || enemy.health <= 0) {
         this.enemies.splice(i, 1);
-        this.totalEnemies++;
 
         if (enemy.type === 3) {
           this.bossSpawned = false;
@@ -185,5 +180,10 @@ class EnemyManager {
     this.enemies = [];
     this.bullets = [];
     this.bossSpawned = false;
+  }
+  
+ // reinicia el tiempo para evitar respawn inmediato
+  resetSpawnTimer() {
+    this.lastSpawnTime = millis();
   }
 }

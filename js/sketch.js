@@ -3,8 +3,8 @@ const playerHeight = 48;
 const enemyWidth = 48;
 const enemyHeight = 48;
 const menuFontSize = 24;
-let soundManager;
 
+let soundManager;
 let player;
 let enemyManager;
 let lastTime = 0;
@@ -30,19 +30,24 @@ let isPaused = false;
 let pauseMenuFontSize = 50;
 let movingLeft = false;
 let movingRight = false;
+let explosionFrames = [];
 
 // Elementos del DOM (los seleccionaremos en setup())
 let startButton;
 let restartButton;
 
 function preload() {
-  // Precargan los sonidos si es necesario
-  // soundManager se inicializará en setup()
+  soundManager = new SoundManager();
+  soundManager.preload();
+
+   for (let i = 1; i <= 12; i++) {
+    explosionFrames.push(loadImage(`img/explosion/explosion-1-${i}.png`));
+  }
 }
 
 function setup() {
   console.log("[setup] Se está ejecutando setup() correctamente");
-  // Crear el canvas - equivalente a tu configuración original
+
   const canvas = createCanvas(600, 550);
   canvas.parent("game-container");
 
@@ -51,11 +56,9 @@ function setup() {
   console.log("[setup] startButton:", startButton);
   restartButton = select("#restartButton");
 
-  // Configurar el juego
-  //soundManager = new SoundManager();
   initGame();
 
-  // Configurar eventos (similar a tu código original)
+  soundManager.playBackgroundMusic();
   startButton.mousePressed(() => {
     console.log("Se presionó el botón Start");
     if (gameFlagStart == true) {
@@ -65,25 +68,26 @@ function setup() {
         isPlaying = true;
         startTime = millis();
         enemyManager.init(level);
+        soundManager.playBackgroundMusic();
         //soundManager.backgroundMusic.play();
         loop();
       }
     } else {
-      //soundManager.stopGameOverSound();
+      soundManager.stopGameOverSound();
     }
   });
 
   restartButton.mousePressed(() => {
     if (gameOverState) {
-      //soundManager.stopGameOverSound();
+      soundManager.stopGameOverSound(); 
+      soundManager.playBackgroundMusic();
       resetGame();
     }
   });
-  noLoop(); // Pausamos el bucle hasta que el juego comience
+  noLoop();
 }
 
 function draw() {
-  // Equivalente a tu función update()
   const time = millis();
 
   if (!player.isAlive()) return;
@@ -136,7 +140,7 @@ function draw() {
     explosion.draw();
 
     if (explosion.finished) {
-      explosions.splice(i, 1); 
+      explosions.splice(i, 1);
     }
   }
 
@@ -154,7 +158,6 @@ function initGame() {
     speed,
     width,
     height
-    //soundManager.shootSound
   );
 
   mejoras = new Mejoras(player);
@@ -204,11 +207,12 @@ function drawControls() {
 function resetGame() {
   if (!gameOverState) return;
 
+  level = 1;
+
   initGame();
   startTime = millis();
   enemyManager.init(level);
-  /*  soundManager.stopBackgroundMusic();
-  soundManager.backgroundMusic.play(); */
+  soundManager.playBackgroundMusic();
   isPlaying = true;
   loop();
 
@@ -246,33 +250,18 @@ function checkCollision() {
         bullet.height + bullet.y > enemy.y
       ) {
         bullets.splice(bulletIndex, 1);
-        //soundManager.playExplosionSound();
+        soundManager.playExplosionSound();
 
         if (enemy.takeDamage()) {
           enemyManager.enemies.splice(enemyIndex, 1);
 
-          const explosionImages = [
-            "img/explosion/explosion-1-1.png",
-            "img/explosion/explosion-1-2.png",
-            "img/explosion/explosion-1-3.png",
-            "img/explosion/explosion-1-4.png",
-            "img/explosion/explosion-1-5.png",
-            "img/explosion/explosion-1-6.png",
-            "img/explosion/explosion-1-7.png",
-            "img/explosion/explosion-1-8.png",
-            "img/explosion/explosion-1-9.png",
-            "img/explosion/explosion-1-10.png",
-            "img/explosion/explosion-1-11.png",
-            "img/explosion/explosion-1-12.png",
-          ];
           const newExplosion = new Explosion(
             enemy.x,
             enemy.y,
             enemy.width,
             enemy.height,
-            explosionImages
+            explosionFrames
           );
-          newExplosion.preload();
           explosions.push(newExplosion);
 
           if (enemy.type === 2) {
@@ -296,7 +285,7 @@ function checkCollision() {
     ) {
       enemyManager.bullets.splice(bulletIndex, 1);
       player.loseLife();
-      //soundManager.playLifeLostSound();
+      soundManager.playLifeLostSound();
       if (!player.isAlive()) {
         gameOver();
       }
@@ -316,13 +305,15 @@ function checkCollision() {
 
     if (hitPlayer) {
       enemyManager.enemies.splice(i, 1);
-      player.loseLife(); 
+      player.loseLife();
+      soundManager.playLifeLostSound();
       if (!player.isAlive()) {
         gameOver();
       }
     } else if (touchedBottom) {
       enemyManager.enemies.splice(i, 1);
-      player.lives--; 
+      player.lives--;
+      soundManager.playLifeLostSound();
       if (!player.isAlive()) {
         gameOver();
       }
@@ -345,8 +336,9 @@ function gameOver() {
   gameOverState = true;
   clear();
 
-  /*  soundManager.stopBackgroundMusic();
-  soundManager.playGameOverSound(); */
+  soundManager.stopBackgroundMusic();
+
+  soundManager.playGameOverSound();
 
   fill(255, 0, 0);
   textSize(50);
@@ -422,6 +414,9 @@ function levelUp() {
     }));
 
   showUpgradeMenu = true;
+  enemyManager.enemies = [];
+  enemyManager.bullets = [];
+  enemyManager.resetSpawnTimer();
   isPlaying = false;
 
   resetKeys();

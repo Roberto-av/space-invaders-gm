@@ -1,14 +1,5 @@
 class Player {
-  constructor(
-    x,
-    y,
-    width,
-    height,
-    speed,
-    canvasWidth,
-    canvasHeight,
-    shootSound
-  ) {
+  constructor(x, y, width, height, speed, canvasWidth, canvasHeight) {
     this.x = x;
     this.y = y;
     this.width = width;
@@ -22,7 +13,6 @@ class Player {
     this.keys = {};
     this.lastShotTime = 0;
     this.shootInterval = 800;
-    this.shootSound = shootSound;
     this.lives = 3;
     this.maxLives = 3;
     this.invulnerabilityDuration = 2000;
@@ -208,8 +198,7 @@ class Player {
   }
 
   playShootSound() {
-    this.shootSound.currentTime = 0;
-    this.shootSound.play();
+    soundManager.playShootSound();
   }
 
   aumentarNumeroBalas() {

@@ -1,44 +1,36 @@
 class Explosion {
-  constructor(x, y, width, height, imagePaths) {
+  constructor(x, y, width, height, frames) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
 
-    this.images = [];
-    this.imagePaths = imagePaths;
-
+    this.frames = frames; 
     this.imageIndex = 0;
-    this.animationInterval = 50; // milisegundos
-    this.lastFrameTime = 0;
+    this.animationInterval = 50; 
+    this.lastFrameTime = millis();
     this.finished = false;
-    this.loaded = false;
-  }
-
-  preload() {
-    this.images = this.imagePaths.map((path) => loadImage(path));
-    this.loaded = true;
   }
 
   update() {
-    if (this.finished || !this.loaded) return;
+    if (this.finished) return;
 
     const currentTime = millis();
     if (currentTime - this.lastFrameTime > this.animationInterval) {
       this.imageIndex++;
       this.lastFrameTime = currentTime;
 
-      if (this.imageIndex >= this.images.length) {
+      if (this.imageIndex >= this.frames.length) {
         this.finished = true;
       }
     }
   }
 
   draw() {
-    if (this.finished || !this.loaded) return;
+    if (this.finished || this.imageIndex >= this.frames.length) return;
 
     image(
-      this.images[this.imageIndex],
+      this.frames[this.imageIndex],
       this.x,
       this.y,
       this.width,

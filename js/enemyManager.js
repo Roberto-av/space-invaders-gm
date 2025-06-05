@@ -8,7 +8,7 @@ class EnemyManager {
     this.enemies = [];
     this.bullets = [];
     this.maxActiveEnemies = 3;
-    this.spawnRate = 1000;
+    this.spawnRate = 2000;
     this.totalEnemies = 0;
     this.timeElapsed = 0;
     this.bossSpawnTime = 120000;
@@ -78,23 +78,35 @@ class EnemyManager {
 
   createEnemy(type) {
     const x = random(this.canvasWidth - this.width);
-    let canShoot = false;
-    let speed = 1 + this.level * 0.5;
-    let health = 1;
+    const isLevel1 = this.level === 1;
 
-    if (type === 2) {
-      this.imageSrcs = [
-        "img/enemigos/2/enemigo-2-r-m.png",
-        "img/enemigos/2/enemigo-2-m-r.png",
-      ];
-      health = 2;
-      canShoot = true;
-      speed = 2 + this.level * 0.3;
-    } else {
-      this.imageSrcs = [
-        "img/enemigos/1/enemigo-1-r.png",
-        "img/enemigos/1/enemigo-1-m.png",
-      ];
+    // Configuración base por tipo de enemigo
+    const enemyConfigs = {
+      1: {
+        imageSrcs: [
+          "img/enemigos/1/enemigo-1-r.png",
+          "img/enemigos/1/enemigo-1-m.png",
+        ],
+        health: 1,
+        canShoot: false,
+        speed: isLevel1 ? 1 : 1 + this.level * 0.5,
+      },
+      2: {
+        imageSrcs: [
+          "img/enemigos/2/enemigo-2-r-m.png",
+          "img/enemigos/2/enemigo-2-m-r.png",
+        ],
+        health: 3,
+        canShoot: true,
+        speed: isLevel1 ? 1.2 : 2 + this.level * 0.3,
+      },
+    };
+
+    const config = enemyConfigs[type];
+
+    if (!config) {
+      console.warn(`Tipo de enemigo no válido: ${type}`);
+      return;
     }
 
     const enemy = new Enemy(
@@ -102,14 +114,15 @@ class EnemyManager {
       0,
       this.width,
       this.height,
-      speed,
-      this.imageSrcs,
+      config.speed,
+      config.imageSrcs,
       this.canvasWidth,
       this.canvasHeight,
       type,
-      health,
-      canShoot
+      config.health,
+      config.canShoot
     );
+
     this.enemies.push(enemy);
   }
 

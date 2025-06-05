@@ -22,7 +22,7 @@ let gameStarted = false;
 let gameOverState = false;
 let gameFlagStart = true;
 let mejoras;
-let startTime;
+let startTime = null;
 let showUpgradeMenu = false;
 let selectedOptionIndex = 0;
 let availableUpgrades = [];
@@ -43,7 +43,7 @@ function preload() {
 function setup() {
   console.log("[setup] Se está ejecutando setup() correctamente");
   // Crear el canvas - equivalente a tu configuración original
-  const canvas = createCanvas(600, 450);
+  const canvas = createCanvas(600, 550);
   canvas.parent("game-container");
 
   // Seleccionar elementos del DOM
@@ -63,6 +63,8 @@ function setup() {
         gameStarted = true;
         startButton.attribute("disabled", "");
         isPlaying = true;
+        startTime = millis();
+        enemyManager.init(level);
         //soundManager.backgroundMusic.play();
         loop();
       }
@@ -127,12 +129,16 @@ function draw() {
   checkCollision();
   drawScoreAndLevel();
 
-  explosions.forEach((explosion, index) => {
-    explosion.draw(time);
+  // Dibujar explosiones
+  for (let i = explosions.length - 1; i >= 0; i--) {
+    const explosion = explosions[i];
+    explosion.update();
+    explosion.draw();
+
     if (explosion.finished) {
-      explosions.splice(index, 1);
+      explosions.splice(i, 1); 
     }
-  });
+  }
 
   if (contEnemigos >= maxEnemigos) {
     levelUp();
@@ -161,7 +167,6 @@ function initGame() {
     level
   );
 
-  enemyManager.init(level);
   bullets = [];
   bulletsEnemies = [];
   explosions = [];
@@ -173,7 +178,6 @@ function initGame() {
   maxEnemigos = 10;
   contEnemigos = 0;
   speed = 300;
-  startTime = millis();
 
   movingLeft = false;
   movingRight = false;
@@ -201,6 +205,8 @@ function resetGame() {
   if (!gameOverState) return;
 
   initGame();
+  startTime = millis();
+  enemyManager.init(level);
   /*  soundManager.stopBackgroundMusic();
   soundManager.backgroundMusic.play(); */
   isPlaying = true;
@@ -259,23 +265,28 @@ function checkCollision() {
             "img/explosion/explosion-1-11.png",
             "img/explosion/explosion-1-12.png",
           ];
-          explosions.push(
-            new Explosion(
-              enemy.x,
-              enemy.y,
-              enemy.width,
-              enemy.height,
-              explosionImages
-            )
+          const newExplosion = new Explosion(
+            enemy.x,
+            enemy.y,
+            enemy.width,
+            enemy.height,
+            explosionImages
           );
+          newExplosion.preload();
+          explosions.push(newExplosion);
 
-          score++;
+          if (enemy.type === 2) {
+            score += 3;
+          } else {
+            score++;
+          }
           contEnemigos++;
         }
       }
     });
   });
 
+  // Colisión entre el jugador y las balas de los enemigos
   enemyManager.bullets.forEach((bullet, bulletIndex) => {
     if (
       bullet.x < player.x + player.width &&
@@ -292,20 +303,31 @@ function checkCollision() {
     }
   });
 
-  enemyManager.enemies.forEach((enemy) => {
-    if (
+  // Colisión entre el jugador y los enemigos o si tocan el borde inferior
+  for (let i = enemyManager.enemies.length - 1; i >= 0; i--) {
+    const enemy = enemyManager.enemies[i];
+    const hitPlayer =
       player.x < enemy.x + enemy.width &&
       player.x + player.width > enemy.x &&
       player.y < enemy.y + enemy.height &&
-      player.height + player.y > enemy.y
-    ) {
-      player.loseLife();
-      //soundManager.playLifeLostSound();
+      player.height + player.y > enemy.y;
+
+    const touchedBottom = enemy.y + enemy.height >= height;
+
+    if (hitPlayer) {
+      enemyManager.enemies.splice(i, 1);
+      player.loseLife(); 
+      if (!player.isAlive()) {
+        gameOver();
+      }
+    } else if (touchedBottom) {
+      enemyManager.enemies.splice(i, 1);
+      player.lives--; 
       if (!player.isAlive()) {
         gameOver();
       }
     }
-  });
+  }
 }
 
 function drawPauseMenu() {

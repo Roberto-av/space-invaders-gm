@@ -39,6 +39,9 @@ class Player {
   }
 
   draw() {
+    if (this.invulnerable) {
+      if (millis() % 300 < 150) return; // Efecto de parpadeo
+    }
     image(this.image, this.x, this.y, this.width, this.height);
   }
 
@@ -127,7 +130,7 @@ class Player {
     if (this.maxBullets > 3) {
       for (let i = 0; i < this.maxBullets - 3; i++) {
         this.bulletPositions.push({
-          x: this.x + random(this.width - 20), // Cambiado a random() de p5.js
+          x: this.x + random(this.width - 20),
           y: this.y,
         });
       }

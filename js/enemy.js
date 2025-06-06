@@ -44,7 +44,7 @@ class Enemy {
       this.moveState = "descending";
       this.moveStartTime = millis();
       this.originX = x;
-      this.originY = y; 
+      this.originY = y;
       this.amplitude = 100;
       this.verticalDirection = 1;
       this.diagonalSpeed = 2;
@@ -60,6 +60,11 @@ class Enemy {
       this.maxTimeInInitialState = 3000;
       this.bulletPositions = [];
       this.maxBullets = 6;
+
+      this.centerX = this.x; // Centro inicial del círculo (eje X)
+      this.centerY = this.y; // Centro inicial del círculo (eje Y)
+      this.centerHorizontalSpeed = 1.5; // Velocidad con que se mueve el centro en horizontal
+      this.movingRight = true;
     }
   }
 
@@ -178,31 +183,34 @@ class Enemy {
           this.moveStartTime = currentTime;
         }
       } else if (this.moveState === "circling") {
-        // Movimiento circular constante
-        this.x += cos(this.angle) * this.speed;
-        this.y += sin(this.angle) * this.speed;
-        this.angle += this.angularSpeed;
-
-        // Verificar si el jefe se acerca demasiado a los bordes horizontales
-        if (this.x < 0 || this.x + this.width > this.canvasWidth) {
-          this.x = max(0, min(this.x, this.canvasWidth - this.width));
-          this.angle = -this.angle;
-        }
-
-        // Verificar si el jefe se acerca demasiado a los bordes verticales
-        if (this.y < 0 || this.y + this.height > this.canvasHeight) {
-          this.y = max(0, min(this.y, this.canvasHeight - this.height));
-          this.angle = PI - this.angle;
-        }
-
-        // Asegurarse de que no pase mucho tiempo debajo de la mitad del canvas
-        if (this.y > this.canvasHeight / 2) {
-          if (currentTime - this.lastAboveHalfTime > this.forceMoveUpCooldown) {
-            this.angle = -abs(this.angle);
-            this.lastAboveHalfTime = currentTime;
+        // Mover el centro horizontalmente
+        if (this.movingRight) {
+          this.centerX += this.centerHorizontalSpeed;
+          if (this.centerX + this.width > this.canvasWidth) {
+            this.centerX = this.canvasWidth - this.width;
+            this.movingRight = false;
           }
         } else {
-          this.lastAboveHalfTime = currentTime;
+          this.centerX -= this.centerHorizontalSpeed;
+          if (this.centerX < 0) {
+            this.centerX = 0;
+            this.movingRight = true;
+          }
+        }
+
+        // El centroY puede quedarse fijo o moverse un poco para que no sea tan lineal
+
+        // Movimiento circular alrededor del centro dinámico
+        const radius = 50; // Radio del círculo que hace el jefe alrededor del centroX, centerY
+        this.x = this.centerX + cos(this.angle) * radius;
+        this.y = this.centerY + sin(this.angle) * radius;
+
+        this.angle += this.angularSpeed;
+
+        // Limitar que no se pase de cierto límite vertical
+        if (this.y > this.canvasHeight / 2) {
+          this.y = this.canvasHeight / 2;
+          this.angle = -abs(this.angle);
         }
       }
     }

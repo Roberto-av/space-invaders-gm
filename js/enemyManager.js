@@ -43,9 +43,16 @@ class EnemyManager {
           }
         } else if (playerLevel >= 3) {
           const chance = random();
-          if (chance < 0.15) {
+
+          // Spawnea el jefe SOLO una vez
+          if (!this.bossSpawned) {
+            this.createBoss(true);
+            this.bossSpawned = true;
+          }
+
+          if (chance < 0.20) {
             this.spawnEnemyGroup(3, 5);
-          } else if (chance < 0.45) {
+          } else if (chance < 0.40) {
             this.createEnemy(2);
           } else {
             this.createEnemy(1);
@@ -156,8 +163,8 @@ class EnemyManager {
       bossImageSrcs,
       this.canvasWidth,
       this.canvasHeight,
-      3,
-      20,
+      4,
+      10, // Salud del jefe
       true
     );
 
@@ -166,6 +173,8 @@ class EnemyManager {
     }
 
     this.enemies.push(boss);
+    soundManager.stopBackgroundMusic();
+    soundManager.playBossMusic();
   }
 
   updateEnemies(bullets) {
@@ -179,11 +188,18 @@ class EnemyManager {
       enemy.draw(currentTime);
 
       if (enemy.y > this.canvasHeight || enemy.health <= 0) {
+        console.log("Enemigo eliminado:", {
+          type: enemy.type,
+          health: enemy.health,
+          y: enemy.y,
+        });
         this.enemies.splice(i, 1);
 
-        if (enemy.type === 3) {
+        if (enemy.type === 4) {
+          console.log(">> Jefe eliminado. Deteniendo música del jefe.");
           this.bossSpawned = false;
-          this.bossAppearanceTime = currentTime;
+          soundManager.stopBossMusic();
+          soundManager.playBackgroundMusic(); // Si quieres que regrese la música normal
         }
       }
     }
@@ -239,6 +255,15 @@ class EnemyManager {
       );
 
       this.enemies.push(enemy);
+    }
+  }
+
+  removeEnemy(index, enemy) {
+    this.enemies.splice(index, 1);
+
+    if (enemy.type === 4) {
+      soundManager.stopBossMusic();
+      soundManager.playBackgroundMusic();
     }
   }
 }

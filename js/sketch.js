@@ -40,7 +40,7 @@ function preload() {
   soundManager = new SoundManager();
   soundManager.preload();
 
-   for (let i = 1; i <= 12; i++) {
+  for (let i = 1; i <= 12; i++) {
     explosionFrames.push(loadImage(`img/explosion/explosion-1-${i}.png`));
   }
 }
@@ -79,7 +79,7 @@ function setup() {
 
   restartButton.mousePressed(() => {
     if (gameOverState) {
-      soundManager.stopGameOverSound(); 
+      soundManager.stopGameOverSound();
       soundManager.playBackgroundMusic();
       resetGame();
     }
@@ -209,6 +209,19 @@ function resetGame() {
 
   level = 1;
 
+  if (soundManager.sounds.background) {
+    soundManager.sounds.background.stop();
+    soundManager.sounds.background.jump(0);
+  }
+  if (soundManager.sounds.bossMusic) {
+    soundManager.sounds.bossMusic.stop();
+    soundManager.sounds.bossMusic.jump(0);
+  }
+  if (soundManager.sounds.gameOver) {
+    soundManager.sounds.gameOver.stop();
+    soundManager.sounds.gameOver.jump(0);
+  }
+
   initGame();
   startTime = millis();
   enemyManager.init(level);
@@ -253,7 +266,7 @@ function checkCollision() {
         soundManager.playExplosionSound();
 
         if (enemy.takeDamage()) {
-          enemyManager.enemies.splice(enemyIndex, 1);
+          enemyManager.removeEnemy(enemyIndex, enemy);
 
           const newExplosion = new Explosion(
             enemy.x,
@@ -337,6 +350,7 @@ function gameOver() {
   clear();
 
   soundManager.stopBackgroundMusic();
+  soundManager.stopBossMusic();
 
   soundManager.playGameOverSound();
 
